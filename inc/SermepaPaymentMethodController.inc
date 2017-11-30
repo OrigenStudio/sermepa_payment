@@ -69,6 +69,59 @@ class SermepaPaymentMethodController extends PaymentMethodController {
   }
 
   /**
+   * Handles Sermepa response and change the payment status accordingly.
+   *
+   * Performs checks for response (feedback) sanity, validation of signature and
+   * updates the status based on the response code.
+   *
+   * No operation will be performed by default if no feedback is received, but
+   * this behavior can be changed by passing the 'force' option as TRUE. This
+   * should be used in those cases where a feedback is truly expected so
+   * status is updated accordingly.
+   *
+   * @param \Payment $payment
+   * @param bool     $force
+   */
+  static function handleResponse(Payment $payment, $force = FALSE) {
+    $sermepa = static::createGateway($payment);
+    $feedback = $sermepa->getFeedback();
+    if ($feedback || $force) {
+      try {
+        if (
+          !$feedback ||
+          !isset($feedback['Ds_MerchantParameters']) ||
+          !isset($feedback['Ds_SignatureVersion']) ||
+          !isset($feedback['Ds_Signature'])
+        ) {
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_INVALID_FEEDBACK));
+          throw new SermepaException('Invalid response');
+        }
+        
+        if (!$sermepa->validSignatures($feedback)) {
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_INVALID_SIGNATURES));
+          throw new SermepaException('Invalid signatures');
+        }
+        
+        $decoded_parameters = $sermepa->decodeMerchantParameters($feedback['Ds_MerchantParameters']);
+        static::setStatusFromResponseCode($payment, $decoded_parameters['Ds_Response']);
+        watchdog('sermepa_payment', "Feedback for payment @pid was valid.\nResponse was: @response", array(
+          '@pid' => $payment->pid,
+          '@response' => $sermepa::handleResponse($decoded_parameters['Ds_Response']),
+        ));
+        
+      } catch (SermepaException $e) {
+        watchdog('sermepa_payment', "Feedback for payment @pid was NOT valid.\nError was: @error", array(
+          '@pid' => $payment->pid,
+          '@error' => $e->getMessage(),
+        ));
+        if (payment_status_is_or_has_ancestor($payment->getStatus(), PAYMENT_STATUS_PENDING)) {
+          $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_UNKNOWN));
+        }
+      }
+    }
+  }
+  
+  /**
    * Sets the corresponding status to the given payment for the received response code.
    *
    * @param \Payment $payment
