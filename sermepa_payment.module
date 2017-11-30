@@ -53,43 +53,36 @@ function sermepa_payment_menu() {
 
 
 function sermepa_payment_callback(Payment $payment) {
-  $sermepa = SermepaPaymentMethodController::createGateway($payment);
-  $amount = $payment->totalAmount(false) * 100;
-  // The feedback has been validated in the access_callback function.  We know
-  // it is safe to manipulate it.
-  $feedback = $sermepa->getFeedback();
-  $response = $feedback['Ds_Response'];
-  set_payment_final_status($response, $payment);
+  // when using the HTTP notification system feedback is mandatory, so force
+  // the response handling even if it was not received
+  SermepaPaymentMethodController::handleResponse($payment, TRUE);
   entity_save('payment', $payment);
 }
 
 
 function sermepa_payment_access_callback(Payment $payment) {
   $sermepa = SermepaPaymentMethodController::createGateway($payment);
-  $amount = $payment->totalAmount(false) * 100;
-  $feedback = $sermepa->getFeedback();
-
-  try {
-    $sermepa->checkFeedback($feedback, $amount);
-    watchdog('sermepa_payment', "Feedback for payment {$payment->pid} was valid. Access authorized.");
-    return true;
-  } catch (SermepaException $e) {
-    watchdog('sermepa_payment', "Feedback for payment {$payment->pid} was NOT valid.\nAcces NOT authorized. \nError was: {$e->getMessage()}");
-    return false;
-  }
+  return (bool) $sermepa->getFeedback();
 }
 
 
 function sermepa_payment_return(Payment $payment) {
   watchdog('sermepa_payment', "Transaction for payment {$payment->pid} was authorized.");
-  $payment->finish();
+  sermepa_payment_ok_ko_callback($payment);
 }
 
 function sermepa_payment_failed(Payment $payment) {
   watchdog('sermepa_payment', "Transaction for payment {$payment->pid} was NOT authorized.");
-  $payment->finish();
+  sermepa_payment_ok_ko_callback($payment);
 }
 
+function sermepa_payment_ok_ko_callback(Payment $payment) {
+  // if the TPV is configured for not sending any notification the response
+  // is included in the OK/KO urls, so try to handle it only if it is indeed
+  // received
+  SermepaPaymentMethodController::handleResponse($payment);
+  $payment->finish();
+}
 
 function sermepa_payment_form_redirect(array $form, array &$form_state, Payment $payment) {
   $form = new SermepaPaymentForm($payment);
@@ -159,81 +152,6 @@ function sermepa_payment_payment_method_delete(PaymentMethod $method) {
   if ($method->controller->name == 'SermepaPaymentMethodController') {
     SermepaEntityCRUD::delete($method);
   }
-}
-
-
-function set_payment_final_status($response, $payment) {
-  if ((int) $response <= 99) {
-    $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
-  }
-  else {
-    $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_FAILED));
-    switch ((int) $response) {
-      case 900:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_RETURNS_CONFIRMATIONS));
-        break;
-
-      case 101:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_EXPIRED));
-        break;
-
-      case 102:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_EXCEPTION_CARD));
-        break;
-
-      case 104:
-      case 9104:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_NOT_ALLOWED));
-        break;
-
-      case 116:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_INSUFFICIENT));
-        break;
-
-      case 118:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_UNREGISTERED));
-        break;
-
-      case 129:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_SECURITY_CODE));
-        break;
-
-      case 180:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_OUT_OF_SERVICE));
-        break;
-
-      case 184:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_OWNER_AUTHENTICATION));
-        break;
-
-      case 190:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_NO_REASONS));
-        break;
-
-      case 191:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_WRONG_EXPIRATION));
-        break;
-
-      case 202:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_FRAUD));
-        break;
-
-      case 912:
-      case 9912:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_ISSUER_UNAVAILABLE));
-        break;
-
-      case 913:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_ORDER_DUPLICATED));
-        break;
-
-      default:
-        $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_TRANSACTION_REFUSED));
-        break;
-    }
-  }
-
-    entity_save('payment', $payment);
 }
 
 /**
