@@ -57,15 +57,13 @@ class SermepaPaymentMethodController extends PaymentMethodController {
     libraries_load('sermepa');
     $settings = $payment->method->controller_data;
     return new Sermepa(
-      $settings['titular'],
+      $settings['merchant_name'],
       $settings['merchant_code'],
       $settings['terminal'],
       $settings['signature'],
       $settings['environment'],
-      $settings['encryption_method'],
       array(
         'currency' => $settings['currency'],
-        'merchant_name' => $settings['merchant_name'],
       ));
   }
 
