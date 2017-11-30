@@ -1,6 +1,7 @@
 <?php
 
 use CommerceRedsys\Payment\Sermepa;
+use CommerceRedsys\Payment\SermepaException;
 
 /**
  * Payment Controller for integration with Sermepa (RedSys) gateway.
