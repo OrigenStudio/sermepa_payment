@@ -235,3 +235,27 @@ function set_payment_final_status($response, $payment) {
 
     entity_save('payment', $payment);
 }
+
+/**
+ * Implements hook_libraries_info().
+ */
+function sermepa_payment_libraries_info() {
+  return array(
+    'sermepa' => array(
+      'name' => 'Sermepa (Redsys)',
+      'vendor url' => 'https://github.com/CommerceRedsys/sermepa',
+      'download url' => 'https://github.com/CommerceRedsys/sermepa',
+      'version arguments' => array(
+        'file' => 'CHANGELOG.md',
+        'pattern' => '/Sermepa - v([0-9a-zA-Z\.-]+)/',
+      ),
+      'files' => array(
+        'php' => array(
+          'src/SermepaInterface.php',
+          'src/SermepaException.php',
+          'src/Sermepa.php',
+        ),
+      ),
+    ),
+  );
+}
