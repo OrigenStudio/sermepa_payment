@@ -17,6 +17,9 @@ define('SERMEPA_PAYMENT_STATUS_ISSUER_UNAVAILABLE', 'SERMEPA_PAYMENT_STATUS_ISSU
 define('SERMEPA_PAYMENT_STATUS_ORDER_DUPLICATED', 'SERMEPA_PAYMENT_STATUS_ORDER_DUPLICATED');
 define('SERMEPA_PAYMENT_STATUS_TRANSACTION_REFUSED', 'SERMEPA_PAYMENT_STATUS_TRANSACTION_REFUSED');
 
+define('SERMEPA_PAYMENT_STATUS_INVALID_FEEDBACK', 'SERMEPA_PAYMENT_STATUS_INVALID_FEEDBACK');
+define('SERMEPA_PAYMENT_STATUS_INVALID_SIGNATURES', 'SERMEPA_PAYMENT_STATUS_INVALID_SIGNATURES');
+
 
 /**
  * Implements hook_payment_status_info().
@@ -113,6 +116,18 @@ function sermepa_payment_payment_status_info() {
       'status'  => SERMEPA_PAYMENT_STATUS_TRANSACTION_REFUSED,
       'title'   => t('Transaction refused'),
       'description'   => t('Transaction refused'),
+    ]),
+    new PaymentStatusInfo([
+      'parent'  => PAYMENT_STATUS_FAILED,
+      'status'  => SERMEPA_PAYMENT_STATUS_INVALID_FEEDBACK,
+      'title'   => t('Missing, invalid or malformed feedback'),
+      'description'   => t('Missing, invalid or malformed feedback'),
+    ]),
+    new PaymentStatusInfo([
+      'parent'  => PAYMENT_STATUS_FAILED,
+      'status'  => SERMEPA_PAYMENT_STATUS_INVALID_SIGNATURES,
+      'title'   => t('Invalid signatures on feedback'),
+      'description'   => t('Invalid signatures on feedback'),
     ]),
   ];
 }
