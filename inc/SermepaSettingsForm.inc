@@ -1,5 +1,6 @@
 <?php
 
+use CommerceRedsys\Payment\Sermepa;
 
 /**
  * Creates and validates the settings form for the Sermepa Gateway.

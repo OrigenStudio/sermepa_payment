@@ -1,5 +1,6 @@
 <?php
 
+use CommerceRedsys\Payment\Sermepa;
 
 /**
  * Payment Controller for integration with Sermepa (RedSys) gateway.
