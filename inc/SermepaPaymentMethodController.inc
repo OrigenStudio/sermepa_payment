@@ -68,4 +68,82 @@ class SermepaPaymentMethodController extends PaymentMethodController {
       ));
   }
 
+  /**
+   * Sets the corresponding status to the given payment for the received response code.
+   *
+   * @param \Payment $payment
+   * @param int $response_code
+   */
+  static function setStatusFromResponseCode(Payment $payment, $response_code) {
+    if ((int) $response_code <= 99) {
+      $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_SUCCESS));
+    }
+    else {
+      $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_FAILED));
+      switch ((int) $response_code) {
+        case 900:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_RETURNS_CONFIRMATIONS));
+          break;
+      
+        case 101:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_EXPIRED));
+          break;
+      
+        case 102:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_EXCEPTION_CARD));
+          break;
+      
+        case 104:
+        case 9104:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_NOT_ALLOWED));
+          break;
+      
+        case 116:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_INSUFFICIENT));
+          break;
+      
+        case 118:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_UNREGISTERED));
+          break;
+      
+        case 129:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_SECURITY_CODE));
+          break;
+      
+        case 180:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_OUT_OF_SERVICE));
+          break;
+      
+        case 184:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_OWNER_AUTHENTICATION));
+          break;
+      
+        case 190:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_NO_REASONS));
+          break;
+      
+        case 191:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_WRONG_EXPIRATION));
+          break;
+      
+        case 202:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_FRAUD));
+          break;
+      
+        case 912:
+        case 9912:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_ISSUER_UNAVAILABLE));
+          break;
+      
+        case 913:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_ORDER_DUPLICATED));
+          break;
+      
+        default:
+          $payment->setStatus(new PaymentStatusItem(SERMEPA_PAYMENT_STATUS_TRANSACTION_REFUSED));
+          break;
+      }
+    }
+  }
+  
 }
