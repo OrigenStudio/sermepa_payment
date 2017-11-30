@@ -23,12 +23,18 @@ class SermepaPaymentForm {
   function submit($form_id) {
     $gateway = $this->createGateway();
     $form = [];
-    foreach ($gateway->getFields() as $name => $value) {
-      $form[$name] = array(
-        '#type'   => 'hidden',
-        '#value'  => $value,
-      );
-    }    
+    $form['Ds_MerchantParameters'] = array(
+      '#type'   => 'hidden',
+      '#value'  => $gateway->composeMerchantParameters(),
+    );
+    $form['Ds_Signature'] = array(
+      '#type'   => 'hidden',
+      '#value'  => $gateway->composeMerchantSignature(),
+    );
+    $form['Ds_SignatureVersion'] = array(
+      '#type'   => 'hidden',
+      '#value'  => $gateway->getSignatureVersion(),
+    );
     $form['#action'] = url($gateway->getEnvironment(), array(
       'external' => true,
     ));
