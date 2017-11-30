@@ -73,7 +73,6 @@ class SermepaSettingsForm {
       'terminal'          => $values['terminal'],
       'signature'         => $values['signature'],
       'environment'       => $values['environment'],
-      'encryption_method' => $values['encryption_method'],
     );
   }
 
