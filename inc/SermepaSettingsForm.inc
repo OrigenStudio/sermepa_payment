@@ -57,13 +57,6 @@ class SermepaSettingsForm {
         '#type' => 'select',
         '#options' => Sermepa::getAvailableEnvironments(),
       ),
-      'encryption_method' => array(
-        '#default_value' => $values['encryption_method'],
-        '#required' => true,
-        '#title' => t('Secret encryption key'),
-        '#type' => 'select',
-        '#options' => Sermepa::getAvailableEncryptionMethods(),
-      ),
     );
   }
 
