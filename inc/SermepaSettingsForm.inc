@@ -10,6 +10,7 @@ class SermepaSettingsForm {
    * Creates the settings form for Sermepa Payment Methods.
    */
   function create($values) {
+    libraries_load('sermepa');
     return array(
       'currency' => array(
         '#default_value' => $values['currency'],

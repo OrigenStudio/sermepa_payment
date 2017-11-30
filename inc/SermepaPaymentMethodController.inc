@@ -53,6 +53,7 @@ class SermepaPaymentMethodController extends PaymentMethodController {
    * Create a Sermepa object that acts as a gateway with the Sermepa TPV.
    */
   static function createGateway(Payment $payment) {
+    libraries_load('sermepa');
     $settings = $payment->method->controller_data;
     return new Sermepa(
       $settings['titular'],
