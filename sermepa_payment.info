@@ -1,5 +1,6 @@
 name = Sermepa Payment
 description = Provides Sermepa integration to Payment.
+version = 7.x-2.x-dev
 package = Payment
 dependencies[] = payment
 dependencies[] = libraries
